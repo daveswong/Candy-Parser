@@ -1,90 +1,192 @@
 <?php
 /**
- * Super Class
+ * Quicker PHP Template Engine
  *
  * @package Package Name
  * @subpackage  Subpackage
  * @category    Category
- * @author  Author Name
- * @link    http://example.com
+ * @author  ult-ux@outlook.com
+ * @link    http://ultux.com
  */
 class Quicker
 {
     /**
-    * Data for class manipulation
+    * Config for class manipulation
     *
-    * @var array
+    * @var  array
     */
     private $config = array();
 
+    /**
+    * Data for class manipulation
+    *
+    * @var  array
+    */
     private $data = array();
 
     /**
-    * Encodes string for use in XML
+    * 为模板设置默认的配置参数
     *
-    * @param   string  $str    Input string
-    * @return  string
+    * @param    
+    * @return  
     */
     public function __construct()
     {
-        // 默认设置
+        // 默认设置，可以使用 class->setConfig(array(...)) 方法重置 
         $default_config = array(
             'tpl_suffix'    => '.html.php',
             'template_dir'  => './template/',
             'compile_dir'   => './compiles/'
         );
+        // 引用默认设置
         $this->config =& $default_config;
     }
-   
-    // 赋值
+
+    /**
+    * 为模板赋值
+    *
+    * @param    string|array    $var    变量名或者关联数组
+    * @param    string          $value  $var 为 string 时变量的值
+    * @return  
+    */
     public function assign($var, $value = null)
     {
         if (is_array($var)) {
+            // 处理数组变量
             $this->data =& $var;
         } else {
+            // 处理键值对变量
             $this->data[$var] =& $value;
         }
     }
 
-    // 设置
+    /**
+    * 配置模板参数
+    *
+    * @param    array   $config 关联数组
+    * @return  
+    */
     public function setConfig($config)
     {
         if (!is_array($config)) {
-            die('配置参数不正确，应该是带有键名的多维数组');
+            // return;
+            // 使用 die() 代替 return ，提供错误信息；
+            die('配置参数不正确，应该使用关联数组');
         }
         $this->config =& $config;
     }
 
+    /**
+    * 输出解析后的模板
+    * 
+    * @param    string  $template_name  模板文件路径文件名，不包括扩展名，相对路径 $config['template_dir']
+    * @param    array   $data           关联数组，赋值的数据
+    * @return  
+    */
     public function parse($template_name, $data = null)
     {
         echo $this->fetch($template_name, $data);
     }
 
+    /**
+    * 解析模板
+    * 
+    * @param    string  $template_name  模板文件路径文件名，不包括扩展名，相对路径 $config['template_dir']
+    * @param    array   $data           关联数组，赋值的数据
+    * @return  
+    */
     public function fetch($template_name, $data = null)
     {
-        //
+        // 模板赋值
         $this->assign($data);
-        $template = $this->extendTemplate($template_name);
-        $template = $this->clearTemplate($template);
+        // 重构模板
+        $extend_template = $this->extendTemplate($template_name);
+        // 清理没有被继承的 @block(...)
+        $template =  $this->clearTemplate($extend_template);
+        // 生成编译文件
         $compile_file = $this->generateCompile($template_name, $template);
-        return $this->_render($compile_file);
+        // 渲染编译文件
+        return $this->render($compile_file);
     }
 
-    // 渲染字符串模板
+    /**
+    * 输出解析后的字符串模板
+    * 
+    * @param    string  $template_string    字符串视图片段
+    * @param    array   $data               关联数组，赋值的数据
+    * @return  
+    */
     public function parse_string($template_string, $data = null)
     {
         echo $this->fetch_string($template_string, $data);
     }
 
-    // 解析字符串模板
+    /**
+    * 解析字符串模板，相比较引用模板文件，不需要对模板进行继承重构
+    * 
+    * @param    string  $template_string    字符串视图片段
+    * @param    array   $data               关联数组，赋值的数据
+    * @return  
+    */
     public function fetch_string($template_string, $data = null)
     {
+        // 模板赋值
         $this->assign($data);
+        // 生成编译文件
         $compile_file = $this->generateCompile('template_string', $template_string);
-        return $this->_render($compile_file);
+        // 渲染编译文件
+        return $this->render($compile_file);
+    }
+    
+    /**
+    * 生成编译文件并返回编译文件路径
+    * 
+    * @param    string   $compile_name  文件路径名
+    * @param    string   $template      模板内容字符串
+    * @return   string
+    */
+    private function generateCompile($compile_name, $template)
+    {
+        // 处理文件名
+        $compile_name = md5($compile_name);
+        // 编译文件路径
+        $compile_file = $this->config['compile_dir'].$compile_name.'.php';
+        // 写入编译文件
+        file_put_contents($compile_file, $template);
+        // 返回编译文件路径
+        return $compile_file;
     }
 
-    // 从模板文件获取内容
+    /**
+    * 从编译文件赋值解析渲染视图，返回 html
+    * 该方法请参照 PHP手册 流程控制 include 章节 http://php.net/manual/zh/function.include.php 
+    * Example #6 使用输出缓冲来将 PHP 文件包含入一个字符串
+    * 
+    * @param    string   $compile_file 编译文件路径
+    * @return   string
+    */
+    private function render($compile_file)
+    {
+        if (is_file($compile_file)) {
+            ob_start();
+            // 从赋值的数据中释放变量
+            foreach ($this->data as $key=>$val) {
+                ${$key} = $val;
+            }
+            include $compile_file;
+            $contents = ob_get_contents();
+            ob_end_clean();
+            return $contents;
+        }
+        return false;
+    }
+
+    /**
+    * 获取模板文件的内容
+    * 
+    * @param    string   $template_name 模板文件路径文件名，不包括扩展名，相对路径 $config['template_dir']
+    * @return   string
+    */
     private function getTemplate($template_name)
     {
         $template_file = $this->config['template_dir'].$template_name.$this->config['tpl_suffix'];
@@ -94,48 +196,24 @@ class Quicker
         $template = file_get_contents($template_file);
         return $template;
     }
-    // 赋值并渲染模板
-    private function _render($compile_file)
-    {
-        if (is_file($compile_file)) {
-            ob_start();
 
-            foreach ($this->data as $key=>$val) {
-                ${$key} = $val;
-            }
-
-            include $compile_file;
-            $contents = ob_get_contents();
-            ob_end_clean();
-            return $contents;
-        }
-        return false;
-    }
-
-    // 生成编译文件
-    private function generateCompile($compile_name, $template)
-    {
-        $compile_file = $this->config['compile_dir'];
-        $compile_file .= md5($compile_name);
-        $compile_file .= '.php';
-        file_put_contents($compile_file, $template);
-        return $compile_file;
-    }
-
-    // 扩展模板
+    /**
+    * 根据模板继承重构模板
+    * 
+    * @param    string   $template_name 模板文件路径文件名，不包括扩展名，相对路径 $config['template_dir']
+    * @return   string
+    */
     private function extendTemplate($template_name)
     {
         // 加载模板内容
         $template = $this->getTemplate($template_name);
-
-        // 检查模板是否有 @extends
+        // 检查模板是否有继承模板
         $pattern = '/^@extends\(.*?\){1}/sm';
         preg_match($pattern, $template, $matches);
-        // 模板没有 @extends 时直接输出模板内容
+        // 重构模板方法是循环调用的，如果没有继承模板或者最后一次调用将直接输出模板的字符串内容
         if (!$matches) {
             return $template;
         }
-
         // 获取继承名称
         $extends_name = substr($matches[0], 9, -1);
         // 根据 @extends 模板名称查找 @extends 继承文件
@@ -144,18 +222,25 @@ class Quicker
         if (!file_exists($extends_file)) {
             die('找不到模板继承文件：'.$extends_file);
         }
-        // 找到的话就读取继承文件
+        // 循环
         $extends = $this->extendTemplate($extends_name);
-        // 替换 Block
+        // 替换 Blocks 以重构模板
         $extend_template = $this->extendBlocks($extends, $template);
         return $extend_template;
     }
-     
-    // 替换继承文件的 Blocks
+
+    /**
+    * 替换继承文件的 Blocks
+    * 
+    * @param    string   $extends   继承模板的内容字符串
+    * @param    string   $template  模板的内容字符串
+    * @return   string
+    */
     private function extendBlocks($extends, $template)
     {
         $blocks = $this->getTemplateBlocks($template);
         $pattern = '/@block\(.*?\){1}/sm';
+        // 创建一个回调函数，涉及到调用函数外部变量 参照 PHP手册 匿名函数部分
         $callback = function ($matches) use ($blocks) {
             $key = substr($matches[0], 7, -1);
             if (array_key_exists($key, $blocks)) {
@@ -165,11 +250,16 @@ class Quicker
                 return $matches[0];
             }
         };
-        $fetch = preg_replace_callback($pattern, $callback, $extends);
-        return $fetch;
+        $result = preg_replace_callback($pattern, $callback, $extends);
+        return $result;
     }
 
-    // 获取模板继承 Blocks
+    /**
+    * 从模板中提取 Blocks 到一个数组
+    * 
+    * @param    string   $template  模板的内容字符串
+    * @return   array
+    */
     private function getTemplateBlocks($template)
     {
         $pattern = '/^@block\(.*?\){1}[\s\S]*?@end/sm';
@@ -185,11 +275,16 @@ class Quicker
         }
     }
 
-    // 清理无效 @block(...)
+    /**
+    * 清理没有被继承的 @block(...)
+    * 
+    * @param    string   $template  模板的内容字符串
+    * @return   array
+    */
     public function clearTemplate($template)
     {
         $pattern = '/@block\(.*?\){1}/sm';
-        $fetch = preg_replace($pattern, '', $template);
-        return $fetch;
+        $result = preg_replace($pattern, '', $template);
+        return $result;
     }
 }
