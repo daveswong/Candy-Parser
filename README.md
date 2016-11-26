@@ -3,7 +3,7 @@
 > Quickly PHP Template Engine！ 
 > Quicker 是一个精简而快速的原生PHP模板引擎。
 
-## 特性
+## 1. 特性
 
  1. 精简，一个文件，一个class，不足10kb；
  2. 快速，抛弃 {...} 这种后端不需要，前端学不懂的东西，从 HTML 到 PHP 视图是后端的活儿，所以对你来说，原生的PHP语法一定是你最顺手的，也是运行最快的；
@@ -11,9 +11,9 @@
  4. 输出控制，你可以使用 parse(...) 方法或者 fetch(...) 方法控制是直接输出还是仅获取编译后的 HTML 字符串；
  5. 视图片段，用 parse_string(...) 方法不使用模板文件直接输出字符串和变量可以输出视图片段。
  
- ## 用法
+ ## 2. 用法
  
- ### 基本用法
+ ### 2.1. 基本用法
 
 ``` php
 <?php
@@ -26,7 +26,7 @@ $engine = new Quicker();
 // 解析模板
 $engine->parse('template_name');
 ```
-### 加载配置
+### 2.2. 加载配置
 
 ``` php
 // 模板引擎配置
@@ -38,7 +38,7 @@ $config = array(
 
 $engine->setConfig($config);
 ```
-### 赋值
+### 2.3. 赋值
 
 ``` php
 $data = array(
@@ -61,9 +61,9 @@ $engine->parse('template_name', $data);
  */
 ```
 
-### 解析和渲染
+### 2.4. 解析和渲染
 
-#### 模板
+#### 2.4.1. 模板
 
 ``` php
 // 直接渲染模板
@@ -73,13 +73,13 @@ $engine->parse('template_name', $data);
 $engine->fetch('template_name', $data);
 ```
 
-#### 字符串
+#### 2.4.2. 字符串
 
 ``` php
 // 直接输出一个字符串
 $engine->parse_string(‘<p>Something! <?php echo date('Y-m-d') ?></p>’);
 
-// 模板字符串，里面可以混写 PHP
+// 模板字符串，里面可以混写 PHP ，但是要注意在 PHP 当中，如果使用双引号包裹字符串，内部的函数和变量是会解析的
 $template_string = ‘<p>Something! <?php echo title ?></p>’;
 
 // 赋值输出字符串模板
@@ -88,17 +88,18 @@ $engine->parse_string($template_string, $data);
 $engine->fetch_string($template_string, $data);
 ```
 
-## 模板视图文件
+## 3. 模板视图文件
 
-### 单独的视图文件
+### 3.1. 单独的视图文件
 
 单独的视图文件直接按照 HTML + PHP 混编的方式编写就可以了，除了文件后缀需要与引擎设置一致，别的就不需要了，默认的后缀是 .html.php ，实际上还是 PHP 文件，但是必须写成 template.html.php 的形式，在调用的时候则不需要再写入后缀了。
 
 ``` php
-$engine->parse('path/template', $data); // it will find template.html.php from &this->config['template_dir'].'path/'
+// it will find template.html.php from &this->config['template_dir'].'path/'
+$engine->parse('path/template', $data);
 ```
 
-### 继承模板
+### 3.2. 继承模板
 
 使用继承模板只需要 @extends(...) 就可以了
 
@@ -106,7 +107,7 @@ $engine->parse('path/template', $data); // it will find template.html.php from &
 2. @block(title)@ // 在 layout.html.php 中，创建一个名为 title 的区块；
 3. @block(title)...@end // 这是一个在 template.html.php 中的完整的名为 title 的区块，它内部的内容会替换掉 layout 中的 @block(title)@ 。
 
-#### 视图模板 template.html.php
+#### 3.2.1. 视图模板 template.html.php
 
 ``` php
 @extends(layout)
@@ -138,7 +139,7 @@ $engine->parse('path/template', $data); // it will find template.html.php from &
 @end
 ```
 
-#### 布局模板 layout.html.php
+#### 3.2.2. 布局模板 layout.html.php
 
 ``` php
 @extends(base)
@@ -180,7 +181,7 @@ $engine->parse('path/template', $data); // it will find template.html.php from &
 @end
 ```
 
-#### 基础模板 base.html.php
+#### 3.2.3. 基础模板 base.html.php
 
 ``` html
 <!DOCTYPE html>
@@ -212,7 +213,7 @@ $engine->parse('path/template', $data); // it will find template.html.php from &
 </html>
 ```
 
-#### 生成的编译文件
+#### 3.2.4. 生成的编译文件
 
 ``` html
 <!DOCTYPE html>
@@ -270,9 +271,9 @@ $engine->parse('path/template', $data); // it will find template.html.php from &
 </html>
 ```
 
-## 在 CodeIgniter 中使用
+## 4. 在 CodeIgniter 中使用
 
-### 引用和配置
+### 4.1. 引用和配置
 
 你可以在任意一个控制器中加载一个 Quicker 引擎，然后在控制器内部创建一个变量，并实例化 Quicker 类到这个变量中，并且进行配置和全局赋值。
 
@@ -313,7 +314,7 @@ class FrontController extends CI_Controller {
 }
 ```
 
-### 控制器中赋值和渲染视图
+### 4.2. 控制器中赋值和渲染视图
 这是在 APPPATH/controller/ 目录中的控制器，你的每一个控制器都可以从 common 目录中引入一个公共控制器来控制某个模块的行为。
 
 ``` php
@@ -367,7 +368,7 @@ EOD;
 }
 ```
 
-### 目录结构的建议
+### 4.3. 目录结构的建议
 
 ``` stylus
 project
@@ -386,6 +387,6 @@ project
 		|- ...
 ```
 
-## 代码参考
+## 5. 代码参考
 
 源代码中有详尽注释，如有待商榷之处可以邮件联络。
