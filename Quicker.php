@@ -15,7 +15,11 @@ class Quicker
     *
     * @var  array
     */
-    private $config = array();
+    private $config = array(
+            'tpl_suffix'    => '.html.php',
+            'template_dir'  => './template/',
+            'compile_dir'   => './compiles/'
+    );
 
     /**
     * Data for class manipulation
@@ -32,14 +36,6 @@ class Quicker
     */
     public function __construct()
     {
-        // 默认设置，可以使用 class->setConfig(array(...)) 方法重置 
-        $default_config = array(
-            'tpl_suffix'    => '.html.php',
-            'template_dir'  => './template/',
-            'compile_dir'   => './compiles/'
-        );
-        // 引用默认设置
-        $this->config =& $default_config;
     }
 
     /**
@@ -53,7 +49,7 @@ class Quicker
     {
         if (is_array($var)) {
             // 处理数组变量
-            $this->data =& $var;
+            $this->data = array_merge($this->data, $var);
         } else {
             // 处理键值对变量
             $this->data[$var] =& $value;
@@ -73,7 +69,8 @@ class Quicker
             // 使用 die() 代替 return ，提供错误信息；
             die('配置参数不正确，应该使用关联数组');
         }
-        $this->config =& $config;
+        // 合并配置的数组
+        $this->config = array_merge($this->config, $config);
     }
 
     /**
@@ -116,9 +113,9 @@ class Quicker
     * @param    array   $data               关联数组，赋值的数据
     * @return  
     */
-    public function parse_string($template_string, $data = null)
+    public function parse_str($template_string, $data = null)
     {
-        echo $this->fetch_string($template_string, $data);
+        echo $this->fetch_str($template_string, $data);
     }
 
     /**
@@ -128,7 +125,7 @@ class Quicker
     * @param    array   $data               关联数组，赋值的数据
     * @return  
     */
-    public function fetch_string($template_string, $data = null)
+    public function fetch_str($template_string, $data = null)
     {
         // 模板赋值
         $this->assign($data);
@@ -289,5 +286,14 @@ class Quicker
         $pattern = '/@block\(.*?\){1}/sm';
         $result = preg_replace($pattern, '', $template);
         return $result;
+    }
+
+    // debug 检查 Quicker 内部变量
+    public function checkVar($var_name)
+    {
+        # code...
+        echo '<pre>';
+        var_dump($this->{$var_name});
+        echo '</pre>';
     }
 }
