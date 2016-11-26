@@ -46,7 +46,7 @@ class Quicker
     * 为模板赋值
     *
     * @param    string|array    $var    变量名或者关联数组
-    * @param    string          $value  $var 为 string 时变量的值
+    * @param    string|array    $value  $var 为 string 时变量的值
     * @return  
     */
     public function assign($var, $value = null)
@@ -147,6 +147,9 @@ class Quicker
     */
     private function generateCompile($compile_name, $template)
     {
+        // 检查 compile_dir 是否存在，如果不存在则创新路径
+        if(!is_dir($this->config['compile_dir']))
+            mkdir($this->config['compile_dir']);
         // 处理文件名
         $compile_name = md5($compile_name);
         // 编译文件路径
