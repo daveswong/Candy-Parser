@@ -29,16 +29,6 @@ class Quicker
     private $data = array();
 
     /**
-    * 为模板设置默认的配置参数
-    *
-    * @param    
-    * @return  
-    */
-    public function __construct()
-    {
-    }
-
-    /**
     * 为模板赋值
     *
     * @param    string|array    $var    变量名或者关联数组
@@ -208,7 +198,7 @@ class Quicker
         // 加载模板内容
         $template = $this->getTemplate($template_name);
         // 检查模板是否有继承模板
-        $pattern = '/^@extends\(.*?\){1}/sm';
+        $pattern = '/^@extends\(.*?\){1}/m';
         preg_match($pattern, $template, $matches);
         // 重构模板方法是循环调用的，如果没有继承模板或者最后一次调用将直接输出模板的字符串内容
         if (!$matches) {
@@ -239,10 +229,10 @@ class Quicker
     private function extendBlocks($extends, $template)
     {
         $blocks = $this->getTemplateBlocks($template);
-        $pattern = '/@block\(.*?\){1}/sm';
+        $pattern = '/@block\(.*?\)@{1}/m';
         // 创建一个回调函数，涉及到调用函数外部变量 参照 PHP手册 匿名函数部分
         $callback = function ($matches) use ($blocks) {
-            $key = substr($matches[0], 7, -1);
+            $key = substr($matches[0], 7, -2);
             if (array_key_exists($key, $blocks)) {
                 $replacement = $blocks[$key];
                 return $replacement;
@@ -262,10 +252,10 @@ class Quicker
     */
     private function getTemplateBlocks($template)
     {
-        $pattern = '/^@block\(.*?\){1}[\s\S]*?@end/sm';
+        $pattern = '/@block\(.*?\){1}[\s\S]*?@end/sm';
         if (preg_match_all($pattern, $template, $matches)) {
             foreach ($matches[0] as $val) {
-                if (preg_match('/^@block\(.*?\){1}/m', $val, $tag)) {
+                if (preg_match('/@block\(.*?\){1}/sm', $val, $tag)) {
                     $key = substr($tag[0], 7, -1);
                     $content = substr($val, strlen($key) + 8, -4);
                     $blocks[$key] = $content;
@@ -283,7 +273,7 @@ class Quicker
     */
     public function clearTemplate($template)
     {
-        $pattern = '/@block\(.*?\){1}/sm';
+        $pattern = '/@block\(.*?\)@{1}/m';
         $result = preg_replace($pattern, '', $template);
         return $result;
     }
