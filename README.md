@@ -1,5 +1,7 @@
 # Quicker
 
+# 重大更新，很快将更新文档
+
 > Quickly PHP Template Engine！ 
 > Quicker 是一个精简而快速的原生PHP模板引擎。
 
